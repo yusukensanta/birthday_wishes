@@ -1,0 +1,36 @@
+[tool.poetry]
+name = "birthday-wishes"
+version = "0.1.0"
+description = ""
+authors = ["Your Name <you@example.com>"]
+readme = "README.md"
+
+[tool.poetry.dependencies]
+python = "^3.12"
+"discord.py" = "^2.3.2"
+
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
+
+[tool.mypy]
+strict = false
+ignore_missing_imports = true
+
+[tool.ruff]
+target-version = "py312"
+line-length = 79 # align with PEP 8
+exclude = [".mypy_cache", ".venv"]
+
+[tool.ruff.lint]
+# ref: https://docs.astral.sh/ruff/rules/
+select = [
+  "F", # Flake8
+  "E", # pycodestyle error
+  "W", # pycodestyle warning
+  "I", # isort
+  "C90" # mccabe
+]
+ignore = [
+]
