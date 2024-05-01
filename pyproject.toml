@@ -8,6 +8,8 @@ readme = "README.md"
 [tool.poetry.dependencies]
 python = "^3.12"
 "discord.py" = "^2.3.2"
+tinydb = "^4.8.0"
+schema = "^0.7.5"
 
 
 [build-system]
