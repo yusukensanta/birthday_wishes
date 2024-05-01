@@ -16,7 +16,6 @@ class UserTable:
 
     def __init__(self, db_path: str):
         self.client = TinyDB(db_path)
-        self.client.truncate()
         self.table = Query()
         self.primary_key = "id"
         self.secondary_key = "server_id"

@@ -29,6 +29,17 @@ def run():
         day: int = 1,
         user: discord.Member = None,
     ):
+        if not 1 <= month <= 12:
+            await interaction.response.send_message(
+                "月は1から12の間で指定してください", ephemeral=True
+            )
+            return
+        if not 1 <= day <= 31:
+            await interaction.response.send_message(
+                "日は1から31の間で指定してください", ephemeral=True
+            )
+            return
+
         data = {}
         data["month"] = month
         data["day"] = day
