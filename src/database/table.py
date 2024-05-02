@@ -1,66 +1,107 @@
 from typing import Any
 
 from schema import And, Schema, SchemaError, Use
-from tinydb import Query, TinyDB
+from tinydb import TinyDB, where
+from tinydb.queries import QueryInstance
 
 
-class UserTable:
-    SCHEMA = Schema(
-        {
-            "id": And(Use(int)),
-            "server_id": And(Use(int)),
-            "month": And(Use(int)),
-            "day": And(Use(int)),
-        }
-    )
+class BaseTable:
+    def __init__(self):
+        client = TinyDB("/tmp/birthday_wishes.json")
+        self.table = client.table(type(self).__name__.lower())
 
-    def __init__(self, server_id: int):
-        self.client = TinyDB(f"/tmp/{server_id}.json")
-        self.table = Query()
-        self.primary_key = "id"
-        self.secondary_key = "server_id"
+    @property
+    def _filter_keys(self) -> list[str]:
+        # define filter keys in subclass
+        return []
+
+    @property
+    def _schema(self) -> Schema:
+        # define schema in subclass
+        return Schema({})
+
+    def filter_conditions(self, data: dict[str, Any]) -> QueryInstance:
+        filter = None
+        for key in self._filter_keys:
+            if not filter:
+                filter = where(key) == data.get(key, None)
+            else:
+                filter = filter & (where(key) == data.get(key, None))
+
+        return filter
 
     def _has_valid_schema(self, data: dict[str, Any]) -> bool:
         try:
-            self.SCHEMA.validate(data)
+            self._schema.validate(data)
             return True
         except SchemaError:
             return False
 
     def list_all(self) -> list[dict[str, Any]]:
-        return self.client.all()
+        return self.table.all()
 
     def insert(self, data: dict[str, Any]) -> None:
         if self._has_valid_schema(data):
-            self.client.insert(data)
+            self.table.insert(data)
         else:
             raise ValueError("Invalid schema")
 
     def update(self, data: dict[str, Any]) -> None:
         if self._has_valid_schema(data):
-            self.client.update(
+            self.table.update(
                 data,
-                (self.table.id == data[self.primary_key])
-                & (self.table.server_id == data[self.secondary_key]),
+                self.filter_conditions(data),
             )
         else:
             raise ValueError("Invalid schema")
 
-    def delete(self, record: dict[str, Any]) -> None:
-        self.client.remove(
-            (self.table.id == record[self.primary_key])
-            & (self.table.server_id == record[self.secondary_key])
-        )
+    def delete(self, data: dict[str, Any]) -> None:
+        self.table.remove(self.filter_conditions(data))
 
-    def search(self, record: dict[str, Any]) -> list[dict[str, Any]]:
-        return self.client.search(
-            (self.table.id == record[self.primary_key])
-            & (self.table.server_id == record[self.secondary_key])
-        )
+    def search(self, data: dict[str, Any]) -> list[dict[str, Any]]:
+        return self.table.search(self.filter_conditions(data))
 
-    def record_exists(self, record: dict[str, Any]) -> bool:
-        records = self.search(record)
+    def record_exists(self, data: dict[str, Any]) -> bool:
+        records = self.search(data)
         if records:
             return True
         else:
             return False
+
+
+class MemberTable(BaseTable):
+    def __init__(self):
+        super().__init__()
+
+    @property
+    def _filter_keys(self) -> list[str]:
+        return ["member_id", "server_id"]
+
+    @property
+    def _schema(self) -> Schema:
+        return Schema(
+            {
+                "member_id": And(Use(int)),
+                "server_id": And(Use(int)),
+                "month": And(Use(int)),
+                "day": And(Use(int)),
+            }
+        )
+
+
+class ChannelTable(BaseTable):
+    def __init__(self):
+        super().__init__()
+
+    @property
+    def _filter_keys(self) -> list[str]:
+        return ["server_id"]
+
+    @property
+    def _schema(self) -> Schema:
+        return Schema(
+            {
+                "server_id": And(Use(int)),
+                "channel_id": And(Use(int)),
+            }
+        )

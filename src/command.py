@@ -1,8 +1,8 @@
 import logging
 
-from discord import Interaction, Member, app_commands
+from discord import Interaction, Member, TextChannel, app_commands
 
-from src.database.table import UserTable
+from src.database.table import ChannelTable, MemberTable
 
 logger = logging.getLogger(__name__)
 
@@ -14,17 +14,19 @@ class BirthdayCommandGroup(app_commands.Group):
         self.add_command(reg)
         self.add_command(ls)
         self.add_command(rm)
+        self.add_command(send_to)
+        self.add_command(stop)
 
 
 @app_commands.command(
-    description="誕生日を登録します(userが指定されていない場合は自分の誕生日を登録します)"
+    description="誕生日を登録します(memberが指定されていない場合は自分の誕生日を登録します)"
 )
-@app_commands.describe(month="月", day="日", user="対象のユーザー")
+@app_commands.describe(month="月", day="日", member="対象のユーザー")
 async def reg(
     interaction: Interaction,
     month: int = 1,
     day: int = 1,
-    user: Member = None,
+    member: Member = None,
 ):
     if not 1 <= month <= 12:
         await interaction.response.send_message(
@@ -40,14 +42,15 @@ async def reg(
     data = {}
     data["month"] = month
     data["day"] = day
-    if user:
-        data["id"] = user.id
-        display_name = user.display_name
+    if member:
+        data["member_id"] = member.id
+        display_name = member.display_name
     else:
-        data["id"] = interaction.user.id
+        data["member_id"] = interaction.user.id
         display_name = interaction.user.display_name
     data["server_id"] = interaction.guild_id
-    table = UserTable(data["server_id"])
+
+    table = MemberTable()
     if table.record_exists(data):
         table.update(data)
         logger.info(f"Updated data `{data}`")
@@ -64,24 +67,26 @@ async def reg(
 
 @app_commands.command(description="登録されている誕生日のリストを表示します")
 async def ls(interaction: Interaction):
-    table = UserTable(interaction.guild_id)
-    users = table.list_all()
-    if not users:
+    table = MemberTable()
+    members = table.list_all()
+    if not members:
         await interaction.response.send_message(
             "誕生日が登録されていません", ephemeral=True
         )
         return
-    for index, user in enumerate(users):
-        discord_users: Member = interaction.guild.get_member(user["id"])
-        if discord_users:
-            users[index]["display_name"] = discord_users.display_name
+    for index, member in enumerate(members):
+        discord_user: Member = interaction.guild.get_member(
+            member.get("member_id")
+        )
+        if discord_user:
+            members[index]["display_name"] = discord_user.display_name
         else:
-            users[index]["display_name"] = "すでに退出したユーザー"
+            members[index]["display_name"] = "すでに退出したユーザー"
 
     message = "\n".join(
         [
-            f"{user['display_name']} : {user['month']}月{user['day']}日"
-            for user in users
+            f"{member['display_name']} : {member['month']}月{member['day']}日"
+            for member in members
         ]
     )
 
@@ -91,21 +96,21 @@ async def ls(interaction: Interaction):
 
 
 @app_commands.command(
-    description="誕生日を消します(userが指定されていない場合は自分の誕生日を消します)"
+    description="誕生日を消します(memberが指定されていない場合は自分の誕生日を消します)"
 )
-@app_commands.describe(user="消す対象の人")
-async def rm(interaction: Interaction, user: Member = None):
-    if user:
-        user_id = user.id
+@app_commands.describe(member="消す対象の人")
+async def rm(interaction: Interaction, member: Member = None):
+    if member:
+        member_id = member.id
     else:
-        user = interaction.user
-        user_id = user.id
+        member = interaction.user
+        member_id = member.id
 
     delete_target = {
-        "id": user_id,
+        "member_id": member_id,
         "server_id": interaction.guild_id,
     }
-    table = UserTable(interaction.guild_id)
+    table = MemberTable()
     if not table.record_exists(delete_target):
         await interaction.response.send_message(
             "誕生日が登録されていません", ephemeral=True
@@ -115,5 +120,37 @@ async def rm(interaction: Interaction, user: Member = None):
     table.delete(delete_target)
 
     await interaction.response.send_message(
-        f"{user.display_name}の誕生日を消しました", ephemeral=True
+        f"{member.display_name}の誕生日を消しました", ephemeral=True
+    )
+
+
+@app_commands.command(description="誕生日メッセージの送信先を設定します")
+@app_commands.describe(channel="送信先のチャンネル")
+async def send_to(interaction: Interaction, channel: TextChannel = None):
+    if not channel:
+        channel = interaction.channel
+
+    table = ChannelTable()
+    data = {"server_id": interaction.guild_id, "channel_id": channel.id}
+
+    if table.record_exists(data):
+        table.update(data)
+    else:
+        table.insert(data)
+
+    await interaction.response.send_message(
+        f"誕生日メッセージの送信先を{channel.mention}に設定しました",
+        ephemeral=True,
+    )
+
+
+@app_commands.command(description="誕生日メッセージの送信を停止します")
+@app_commands.describe()
+async def stop(interaction: Interaction):
+    table = ChannelTable()
+    table.delete({"server_id": interaction.guild_id})
+
+    await interaction.response.send_message(
+        "誕生日メッセージの送信を停止しました",
+        ephemeral=True,
     )
