@@ -46,6 +46,12 @@ class UserTable:
         else:
             raise ValueError("Invalid schema")
 
+    def delete(self, record: dict[str, Any]) -> None:
+        self.client.remove(
+            (self.table.id == record[self.primary_key])
+            & (self.table.server_id == record[self.secondary_key])
+        )
+
     def search(self, record: dict[str, Any]) -> list[dict[str, Any]]:
         return self.client.search(
             (self.table.id == record[self.primary_key])

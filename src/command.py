@@ -95,7 +95,26 @@ async def ls(interaction: Interaction):
     description="誕生日を消します(userが指定されていない場合は自分の誕生日を消します)"
 )
 @app_commands.describe(user="消す対象の人")
-async def rm(interaction: Interaction, user: Member):
+async def rm(interaction: Interaction, user: Member = None):
+    if user:
+        user_id = user.id
+    else:
+        user = interaction.user
+        user_id = user.id
+
+    delete_target = {
+        "id": user_id,
+        "server_id": interaction.guild_id,
+    }
+    table = UserTable(interaction.guild_id)
+    if not table.record_exists(delete_target):
+        await interaction.response.send_message(
+            "誕生日が登録されていません", ephemeral=True
+        )
+        return
+
+    table.delete(delete_target)
+
     await interaction.response.send_message(
         f"{user.display_name}の誕生日を消しました", ephemeral=True
     )
