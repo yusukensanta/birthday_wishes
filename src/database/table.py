@@ -27,6 +27,9 @@ class UserTable:
         except SchemaError:
             return False
 
+    def list_all(self) -> list[dict[str, Any]]:
+        return self.client.all()
+
     def insert(self, data: dict[str, Any]) -> None:
         if self._has_valid_schema(data):
             self.client.insert(data)
