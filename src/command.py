@@ -1,11 +1,10 @@
-import os
+import logging
 
 from discord import Interaction, Member, app_commands
 
 from src.database.table import UserTable
 
-DATA_PATH = os.environ.get("DATA_PATH", "data.json")
-table = UserTable(DATA_PATH)
+logger = logging.getLogger(__name__)
 
 
 class BirthdayCommandGroup(app_commands.Group):
@@ -41,6 +40,7 @@ async def reg(
     data = {}
     data["month"] = month
     data["day"] = day
+    print(user, type(user))
     if user:
         data["id"] = user.id
         display_name = user.display_name
@@ -48,13 +48,16 @@ async def reg(
         data["id"] = interaction.user.id
         display_name = interaction.user.display_name
     data["server_id"] = interaction.guild_id
+    table = UserTable(data["server_id"])
     if table.record_exists(data):
         table.update(data)
+        logger.info(f"Updated data `{data}`")
         await interaction.response.send_message(
             f"`{display_name}`の誕生日を{month}月{day}日で更新しました"
         )
     else:
         table.insert(data)
+        logger.info(f"Inserted data `{data}`")
         await interaction.response.send_message(
             f"`{display_name}`の誕生日を{month}月{day}日で登録しました"
         )
@@ -62,13 +65,13 @@ async def reg(
 
 @app_commands.command(description="登録されている誕生日のリストを表示します")
 async def ls(interaction: Interaction):
+    table = UserTable(interaction.guild_id)
     users = table.list_all()
     if not users:
         await interaction.response.send_message(
             "誕生日が登録されていません", ephemeral=True
         )
         return
-
     for index, user in enumerate(users):
         discord_users: Member = interaction.guild.get_member(user["id"])
         if discord_users:

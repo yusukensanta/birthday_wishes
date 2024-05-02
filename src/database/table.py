@@ -14,8 +14,8 @@ class UserTable:
         }
     )
 
-    def __init__(self, db_path: str):
-        self.client = TinyDB(db_path)
+    def __init__(self, server_id: int):
+        self.client = TinyDB(f"/tmp/{server_id}.json")
         self.table = Query()
         self.primary_key = "id"
         self.secondary_key = "server_id"
@@ -48,8 +48,8 @@ class UserTable:
 
     def search(self, record: dict[str, Any]) -> list[dict[str, Any]]:
         return self.client.search(
-            self.table.id == record[self.primary_key]
-            and self.table.server_id == record[self.secondary_key]
+            (self.table.id == record[self.primary_key])
+            & (self.table.server_id == record[self.secondary_key])
         )
 
     def record_exists(self, record: dict[str, Any]) -> bool:
