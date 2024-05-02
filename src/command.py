@@ -40,7 +40,6 @@ async def reg(
     data = {}
     data["month"] = month
     data["day"] = day
-    print(user, type(user))
     if user:
         data["id"] = user.id
         display_name = user.display_name
