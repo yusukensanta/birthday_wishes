@@ -66,7 +66,7 @@ async def reg(
 @app_commands.command(description="登録されている誕生日のリストを表示します")
 async def ls(interaction: Interaction):
     manager = BirthdayManager()
-    members = manager.list_all()
+    members = manager.list_all(interaction.guild_id)
     if not members:
         await interaction.response.send_message(
             "誕生日が登録されていません", ephemeral=True
@@ -85,7 +85,7 @@ async def ls(interaction: Interaction):
 
     message = "\n".join(
         [
-            f"""{member['display_name']} :
+            f"""{member['display_name']} : \
             {member['birth_month']}月{member['birth_day']}日"""
             for member in members
         ]

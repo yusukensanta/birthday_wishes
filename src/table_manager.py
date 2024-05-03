@@ -28,8 +28,8 @@ class BaseManager:
 
         return filter
 
-    def list_all(self) -> list[dict[str, Any]]:
-        return self.table.all()
+    def list_all(self, server_id: int) -> list[dict[str, Any]]:
+        return self.table.search(where("server_id") == server_id)
 
     def insert(self, data: Union[Birthday, BirthdayChannel]) -> None:
         self.table.insert(data.dict())
