@@ -6,7 +6,7 @@ import sys
 from discord import Intents
 from discord.ext import commands
 
-from src.command import BirthdayCommandGroup
+from src.command_group import BirthdayCommandGroup
 
 logger = logging.getLogger("discord")
 logger.setLevel(logging.DEBUG)
@@ -42,7 +42,7 @@ if __name__ == "__main__":
     handler = logging.StreamHandler(sys.stdout)
     dt_fmt = "%Y-%m-%d %H:%M:%S"
     formatter = logging.Formatter(
-        "[{asctime}] [{levelname:<8}] {name}: {message}", dt_fmt, style="{"
+        "[{asctime}] [{levelname:<6}] {name}: {message}", dt_fmt, style="{"
     )
     handler.setFormatter(formatter)
     logger.addHandler(handler)

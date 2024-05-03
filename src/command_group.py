@@ -2,7 +2,8 @@ import logging
 
 from discord import Interaction, Member, TextChannel, app_commands
 
-from src.database.table import ChannelTable, MemberTable
+from src.manager_manager import BirthdayManager, ChannelManager
+from src.model import Birthday, BirthdayChannel
 
 logger = logging.getLogger(__name__)
 
@@ -28,20 +29,9 @@ async def reg(
     day: int = 1,
     member: Member = None,
 ):
-    if not 1 <= month <= 12:
-        await interaction.response.send_message(
-            "月は1から12の間で指定してください", ephemeral=True
-        )
-        return
-    if not 1 <= day <= 31:
-        await interaction.response.send_message(
-            "日は1から31の間で指定してください", ephemeral=True
-        )
-        return
-
     data = {}
-    data["month"] = month
-    data["day"] = day
+    data["birth_month"] = month
+    data["birth_day"] = day
     if member:
         data["member_id"] = member.id
         display_name = member.display_name
@@ -50,25 +40,33 @@ async def reg(
         display_name = interaction.user.display_name
     data["server_id"] = interaction.guild_id
 
-    table = MemberTable()
-    if table.record_exists(data):
-        table.update(data)
-        logger.info(f"Updated data `{data}`")
+    try:
+        birthday = Birthday(**data)
+    except ValueError as e:
         await interaction.response.send_message(
-            f"`{display_name}`の誕生日を{month}月{day}日で更新しました"
+            f"登録に失敗しました: {e}", ephemeral=True
+        )
+        return
+
+    manager = BirthdayManager()
+    if manager.record_exists(birthday):
+        manager.update(birthday)
+        logger.info(f"Updated data `{birthday.dict()}`")
+        await interaction.response.send_message(
+            f"`{display_name}`の誕生日を{birthday.birth_month}月{birthday.birth_day}日で更新しました"
         )
     else:
-        table.insert(data)
-        logger.info(f"Inserted data `{data}`")
+        manager.insert(birthday)
+        logger.info(f"Inserted data `{birthday.dict()}`")
         await interaction.response.send_message(
-            f"`{display_name}`の誕生日を{month}月{day}日で登録しました"
+            f"`{display_name}`の誕生日を{birthday.birth_month}月{birthday.birth_day}日で登録しました"
         )
 
 
 @app_commands.command(description="登録されている誕生日のリストを表示します")
 async def ls(interaction: Interaction):
-    table = MemberTable()
-    members = table.list_all()
+    manager = BirthdayManager()
+    members = manager.list_all()
     if not members:
         await interaction.response.send_message(
             "誕生日が登録されていません", ephemeral=True
@@ -79,6 +77,8 @@ async def ls(interaction: Interaction):
             member.get("member_id")
         )
         if discord_user:
+            # display_name can be changed by user
+            # so get latest display name from discord
             members[index]["display_name"] = discord_user.display_name
         else:
             members[index]["display_name"] = "すでに退出したユーザー"
@@ -103,21 +103,22 @@ async def rm(interaction: Interaction, member: Member = None):
     if member:
         member_id = member.id
     else:
-        member = interaction.user
+        member = interaction.user  # to get display name
         member_id = member.id
 
     delete_target = {
         "member_id": member_id,
         "server_id": interaction.guild_id,
     }
-    table = MemberTable()
-    if not table.record_exists(delete_target):
+    birthday = Birthday(**delete_target)
+    manager = BirthdayManager()
+    if not manager.record_exists(birthday):
         await interaction.response.send_message(
             "誕生日が登録されていません", ephemeral=True
         )
         return
 
-    table.delete(delete_target)
+    manager.delete(birthday)
 
     await interaction.response.send_message(
         f"{member.display_name}の誕生日を消しました", ephemeral=True
@@ -130,13 +131,14 @@ async def send_to(interaction: Interaction, channel: TextChannel = None):
     if not channel:
         channel = interaction.channel
 
-    table = ChannelTable()
+    manager = ChannelManager()
     data = {"server_id": interaction.guild_id, "channel_id": channel.id}
 
-    if table.record_exists(data):
-        table.update(data)
+    birthday_channel = BirthdayChannel(**data)
+    if manager.record_exists(birthday_channel):
+        manager.update(birthday_channel)
     else:
-        table.insert(data)
+        manager.insert(birthday_channel)
 
     await interaction.response.send_message(
         f"誕生日メッセージの送信先を{channel.mention}に設定しました",
@@ -147,9 +149,9 @@ async def send_to(interaction: Interaction, channel: TextChannel = None):
 @app_commands.command(description="誕生日メッセージの送信を停止します")
 @app_commands.describe()
 async def stop(interaction: Interaction):
-    table = ChannelTable()
-    table.delete({"server_id": interaction.guild_id})
-
+    manager = ChannelManager()
+    birthday_channel = BirthdayChannel(server_id=interaction.guild_id)
+    manager.delete(birthday_channel)
     await interaction.response.send_message(
         "誕生日メッセージの送信を停止しました",
         ephemeral=True,
