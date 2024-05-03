@@ -22,9 +22,9 @@ class BaseManager:
         filter = None
         for key in self._filter_keys:
             if not filter:
-                filter = where(key) == data.dict.get(key, None)
+                filter = where(key) == data.dict().get(key, None)
             else:
-                filter = filter & (where(key) == data.dict.get(key, None))
+                filter = filter & (where(key) == data.dict().get(key, None))
 
         return filter
 

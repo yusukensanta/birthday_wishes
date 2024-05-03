@@ -2,8 +2,8 @@ import logging
 
 from discord import Interaction, Member, TextChannel, app_commands
 
-from src.manager_manager import BirthdayManager, ChannelManager
 from src.model import Birthday, BirthdayChannel
+from src.table_manager import BirthdayManager, ChannelManager
 
 logger = logging.getLogger(__name__)
 
@@ -44,7 +44,7 @@ async def reg(
         birthday = Birthday(**data)
     except ValueError as e:
         await interaction.response.send_message(
-            f"登録に失敗しました: {e}", ephemeral=True
+            f"登録に失敗しました: {repr(e)}", ephemeral=True
         )
         return
 
@@ -85,7 +85,8 @@ async def ls(interaction: Interaction):
 
     message = "\n".join(
         [
-            f"{member['display_name']} : {member['month']}月{member['day']}日"
+            f"""{member['display_name']} :
+            {member['birth_month']}月{member['birth_day']}日"""
             for member in members
         ]
     )

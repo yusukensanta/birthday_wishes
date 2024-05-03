@@ -12,13 +12,13 @@ class Birthday(BaseModel):
     @field_validator("birth_month")
     def validate_birth_month(cls, v):
         if v and v < 1 or v > 12:
-            raise ValueError("birth_month must be between 1 and 12")
+            raise ValueError("月は1から12の間で指定して下さい")
         return v
 
     @field_validator("birth_day")
     def validate_birth_day(cls, v):
         if v and v < 1 or v > 12:
-            raise ValueError("birth_month must be between 1 and 12")
+            raise ValueError("日は1から31の間で指定して下さい")
         return v
 
 
