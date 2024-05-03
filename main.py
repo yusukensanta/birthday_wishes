@@ -4,8 +4,8 @@ import os
 import sys
 
 from discord import Intents
-from discord.ext import commands
 
+from src.bot import BirthdayBot
 from src.command_group import BirthdayCommandGroup
 
 logger = logging.getLogger("discord")
@@ -19,7 +19,7 @@ def run():
     intents.guilds = True
     intents.message_content = True
     intents.members = True
-    bot = commands.Bot(
+    bot = BirthdayBot(
         command_prefix="/", case_insensitive=True, intents=intents
     )
     bot.tree.add_command(BirthdayCommandGroup("誕生日関連のコマンド"))
