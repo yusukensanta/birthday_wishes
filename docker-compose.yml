@@ -2,7 +2,10 @@ services:
   server:
     build:
       context: .
+      target: production
     volumes:
       - type: bind
         source: ./
         target: /home/app
+    environment:
+      - DISCORD_TOKEN=${DISCORD_TOKEN}

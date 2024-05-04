@@ -32,7 +32,7 @@ COPY poetry.lock pyproject.toml ./
 RUN poetry install --no-dev
 
 
-FROM base as production
+FROM builder-base as production
 COPY --from=builder-base $PYSETUP_PATH $PYSETUP_PATH
 WORKDIR $WORKDIR
 COPY . .
