@@ -1,6 +1,6 @@
 import logging
 
-from discord import Interaction, Member, TextChannel, app_commands
+from discord import Embed, Interaction, Member, TextChannel, app_commands
 
 from src.model import Birthday, BirthdayChannel
 from src.table_manager import BirthdayManager, ChannelManager
@@ -17,6 +17,7 @@ class BirthdayCommandGroup(app_commands.Group):
         self.add_command(rm)
         self.add_command(send_to)
         self.add_command(stop)
+        self.add_command(help)
 
 
 @app_commands.command(
@@ -53,13 +54,15 @@ async def reg(
         manager.update(birthday)
         logger.info(f"Updated data `{birthday.dict()}`")
         await interaction.response.send_message(
-            f"`{display_name}`の誕生日を{birthday.birth_month}月{birthday.birth_day}日で更新しました"
+            f"`{display_name}`の誕生日を{birthday.birth_month}月{birthday.birth_day}日で更新しました",
+            ephemeral=True,
         )
     else:
         manager.insert(birthday)
         logger.info(f"Inserted data `{birthday.dict()}`")
         await interaction.response.send_message(
-            f"`{display_name}`の誕生日を{birthday.birth_month}月{birthday.birth_day}日で登録しました"
+            f"`{display_name}`の誕生日を{birthday.birth_month}月{birthday.birth_day}日で登録しました",
+            ephemeral=True,
         )
 
 
@@ -148,12 +151,36 @@ async def send_to(interaction: Interaction, channel: TextChannel = None):
 
 
 @app_commands.command(description="誕生日メッセージの送信を停止します")
-@app_commands.describe()
 async def stop(interaction: Interaction):
     manager = ChannelManager()
     birthday_channel = BirthdayChannel(server_id=interaction.guild_id)
     manager.delete(birthday_channel)
     await interaction.response.send_message(
-        "誕生日メッセージの送信を停止しました",
+        """
+        誕生日メッセージの送信を停止しました
+        再開する場合は`/bd send_to`を実行してください"
+        """,
+        ephemeral=True,
+    )
+
+
+@app_commands.command(description="ヘルプを表示します")
+async def help(interaction: Interaction):
+    embed = Embed(
+        title="Birthday Bot(ja)",
+        description="""
+            誕生日を管理するBotです。以下のコマンドが利用できます。\n
+            - `/bd reg`: 誕生日の登録\n
+            - `/bd ls`: 登録されている誕生日のリスト表示\n
+            - `/bd rm`: 誕生日の登録削除\n
+            - `/bd send_to`: 誕生日メッセージの送信先設定\n
+            - `/bd stop`: 誕生日メッセージの送信停止\n
+            - `/bd help`: ヘルプの表示\n
+            `/`を入力してこのBotのアイコンをクリックするとコマンドが表示されます。
+            """,
+        color=0x00FF00,
+    )
+    await interaction.response.send_message(
+        embed=embed,
         ephemeral=True,
     )
