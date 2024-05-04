@@ -6,11 +6,10 @@ authors = ["Your Name <you@example.com>"]
 readme = "README.md"
 
 [tool.poetry.dependencies]
-python = "^3.12"
+python = "^3.11"
+pydantic = "^2.7.1"
 "discord.py" = "^2.3.2"
 tinydb = "^4.8.0"
-schema = "^0.7.5"
-pydantic = "^2.7.1"
 
 
 [build-system]
