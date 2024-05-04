@@ -5,7 +5,7 @@ from pydantic import BaseModel, field_validator
 
 class Birthday(BaseModel):
     server_id: int
-    member_id: int
+    member_id: Optional[int] = None
     birth_month: Optional[int] = None
     birth_day: Optional[int] = None
 
@@ -17,7 +17,7 @@ class Birthday(BaseModel):
 
     @field_validator("birth_day")
     def validate_birth_day(cls, v):
-        if v and v < 1 or v > 12:
+        if v and v < 1 or v > 31:
             raise ValueError("日は1から31の間で指定して下さい")
         return v
 
