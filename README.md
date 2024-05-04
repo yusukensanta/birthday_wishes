@@ -3,7 +3,7 @@
 
 # Dev
 - Poetry
-- Python
+- Python (3.11)
 - Docker(optional)
 
 ## How to use
