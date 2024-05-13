@@ -17,6 +17,6 @@ class TCPServer:
             self.sock.listen(5)
             client, address = self.sock.accept()
             print(f"Connection from {address}")
-            client.send("Hello from Discord Bot")
+            client.send("Hello from Discord Bot".encode("utf-8"))
             client.close()
         self.sock.close()
