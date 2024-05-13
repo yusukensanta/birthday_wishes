@@ -1,3 +1,4 @@
+import logging
 from datetime import datetime, time
 from zoneinfo import ZoneInfo
 
@@ -9,21 +10,30 @@ scheduled_time = time(
     hour=0, minute=0, second=0, tzinfo=ZoneInfo("Asia/Tokyo")
 )
 
+logger = logging.getLogger(__name__)
 
-class BirthdayBot(commands.Bot):
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
+
+class BirthdayCog(commands.GroupCog):
+    def __init__(self, bot):
+        self.bot = bot
+        self.birthday_wish.start()
+
+    def cog_unload(self):
+        self.birthday_wish.cancel()
 
     @tasks.loop(time=scheduled_time)
     async def birthday_wish(self):
         today = datetime.now(ZoneInfo("Asia/Tokyo"))
-        for guild in self.guilds():
+        logger.info(
+            f"Checking birthday for {today.strftime('%Y-%m-%d %H:%M:%S%z')}"
+        )
+        async for guild in self.fetch_guilds():
             server_id = guild.id
-            birthday_manager = BirthdayManager(server_id=server_id)
-            birthdays = birthday_manager.list_all()
+            birthday_manager = BirthdayManager()
+            birthdays = birthday_manager.list_all(server_id=server_id)
+
             if not birthdays:
                 continue
-
             else:
                 for birthday in birthdays:
                     if (
@@ -39,7 +49,3 @@ class BirthdayBot(commands.Bot):
                         await self.get_channel(channel["channel_id"]).send(
                             "Happy Birthday!"
                         )
-
-    @birthday_wish.before_loop
-    async def before_birthday_wish(self):
-        await self.bot.wait_until_ready()

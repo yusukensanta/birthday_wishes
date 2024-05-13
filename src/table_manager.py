@@ -62,7 +62,7 @@ class BirthdayManager(BaseManager):
 
     @property
     def _filter_keys(self) -> list[str]:
-        return ["member_id", "server_id"]
+        return ["server_id"]
 
 
 class ChannelManager(BaseManager):

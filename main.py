@@ -2,10 +2,13 @@ import logging
 import logging.handlers
 import os
 import sys
+import threading
 
 from discord import Intents
+from discord.ext import commands
 
-from src.bot import BirthdayBot
+from dummy_server import TCPServer
+from src.cog import BirthdayCog
 from src.command_group import BirthdayCommandGroup
 
 logger = logging.getLogger("discord")
@@ -19,21 +22,29 @@ def run():
     intents.guilds = True
     intents.message_content = True
     intents.members = True
-    bot = BirthdayBot(
+    bot = commands.Bot(
         command_prefix="/", case_insensitive=True, intents=intents
     )
     bot.tree.add_command(BirthdayCommandGroup("誕生日関連のコマンド"))
 
-    @bot.event
-    async def on_ready():
-        logger.info("BOT is ready")
-        try:
-            synced = await bot.tree.sync()
-            logger.info(f"Synced {len(synced)} commands")
-        except Exception as e:
-            logger.error(e)
+    dummy = TCPServer()
+    thread = threading.Thread(
+        target=dummy.listen
+    )  # render.com requires to open certain tcp port
+    thread.daemon = True
+    thread.start()
 
     bot.run(TOKEN, log_handler=None)
+
+    @bot.event
+    async def on_ready(self):
+        logger.info("BOT is ready")
+        try:
+            synced = await self.tree.sync()
+            logger.info(f"Synced {len(synced)} commands")
+            await bot.add_cog(BirthdayCog(bot))
+        except Exception as e:
+            logger.error(e)
 
 
 if __name__ == "__main__":

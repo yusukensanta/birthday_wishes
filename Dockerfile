@@ -34,6 +34,5 @@ RUN poetry install --no-dev
 
 FROM builder-base as production
 COPY --from=builder-base $PYSETUP_PATH $PYSETUP_PATH
-WORKDIR $WORKDIR
 COPY . .
 CMD ["poetry", "run", "python", "main.py"]
