@@ -2,12 +2,10 @@ import logging
 import logging.handlers
 import os
 import sys
-import threading
 
 from discord import Intents
 from discord.ext import commands
 
-from dummy_server import TCPServer
 from src.cog import BirthdayCog
 from src.command_group import BirthdayCommandGroup
 
@@ -26,14 +24,6 @@ def run():
         command_prefix="/", case_insensitive=True, intents=intents
     )
     bot.tree.add_command(BirthdayCommandGroup("誕生日関連のコマンド"))
-
-    dummy = TCPServer()
-    thread = threading.Thread(
-        target=dummy.listen
-    )  # render.com requires to open certain tcp port
-    thread.daemon = True
-    thread.start()
-
     bot.run(TOKEN, log_handler=None)
 
     @bot.event
