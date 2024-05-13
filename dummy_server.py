@@ -7,7 +7,7 @@ class TCPServer:
             self.sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         else:
             self.sock = sock
-        self.bind(8080)
+        self.bind(5000)
 
     def bind(self, port):
         self.sock.bind((socket.gethostname(), port))
