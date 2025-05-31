@@ -25,3 +25,18 @@ class Birthday(BaseModel):
 class BirthdayChannel(BaseModel):
     server_id: int
     channel_id: Optional[int] = None
+
+
+class ScheduledMessage(BaseModel):
+    message_id: str
+    server_id: int
+    channel_id: int
+    user_id: int
+    message_content: str
+    cron_expression: str
+
+    @field_validator("cron_expression")
+    def validate_cron_expression(cls, v):
+        if not v:
+            raise ValueError("cron_expression cannot be empty")
+        return v

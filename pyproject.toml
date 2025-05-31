@@ -10,6 +10,7 @@ python = "^3.11"
 pydantic = "^2.7.1"
 "discord.py" = "^2.3.2"
 tinydb = "^4.8.0"
+croniter = "^2.0.0"
 
 
 [build-system]
@@ -44,3 +45,7 @@ ignore = [
 quote-style = "double"
 indent-style = "space"
 preview = true
+
+[tool.poetry.group.dev.dependencies]
+pytest = "^7.0.0"
+pytest-asyncio = "^0.21.0" # Good for async discord.py code

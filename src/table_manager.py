@@ -3,7 +3,7 @@ from typing import Any, Union
 from tinydb import TinyDB, where
 from tinydb.queries import QueryInstance
 
-from src.model import Birthday, BirthdayChannel
+from src.model import Birthday, BirthdayChannel, ScheduledMessage
 
 
 class BaseManager:
@@ -17,7 +17,7 @@ class BaseManager:
         return []
 
     def filter_conditions(
-        self, data: Union[Birthday, BirthdayChannel]
+        self, data: Union[Birthday, BirthdayChannel, ScheduledMessage]
     ) -> QueryInstance:
         filter = None
         for key in self._filter_keys:
@@ -31,24 +31,24 @@ class BaseManager:
     def list_all(self, server_id: int) -> list[dict[str, Any]]:
         return self.table.search(where("server_id") == server_id)
 
-    def insert(self, data: Union[Birthday, BirthdayChannel]) -> None:
+    def insert(self, data: Union[Birthday, BirthdayChannel, ScheduledMessage]) -> None:
         self.table.insert(data.dict())
 
-    def update(self, data: Union[Birthday, BirthdayChannel]) -> None:
+    def update(self, data: Union[Birthday, BirthdayChannel, ScheduledMessage]) -> None:
         self.table.update(
             data.dict(),
             self.filter_conditions(data),
         )
 
-    def delete(self, data: Union[Birthday, BirthdayChannel]) -> None:
+    def delete(self, data: Union[Birthday, BirthdayChannel, ScheduledMessage]) -> None:
         self.table.remove(self.filter_conditions(data))
 
     def search(
-        self, data: Union[Birthday, BirthdayChannel]
+        self, data: Union[Birthday, BirthdayChannel, ScheduledMessage]
     ) -> list[dict[str, Any]]:
         return self.table.search(self.filter_conditions(data))
 
-    def record_exists(self, data: Union[Birthday, BirthdayChannel]) -> bool:
+    def record_exists(self, data: Union[Birthday, BirthdayChannel, ScheduledMessage]) -> bool:
         records = self.search(data)
         if records:
             return True
@@ -62,7 +62,7 @@ class BirthdayManager(BaseManager):
 
     @property
     def _filter_keys(self) -> list[str]:
-        return ["server_id"]
+        return ["server_id", "member_id"]
 
 
 class ChannelManager(BaseManager):
@@ -72,3 +72,12 @@ class ChannelManager(BaseManager):
     @property
     def _filter_keys(self) -> list[str]:
         return ["server_id"]
+
+
+class ScheduledMessageManager(BaseManager):
+    def __init__(self):
+        super().__init__()
+
+    @property
+    def _filter_keys(self) -> list[str]:
+        return ['message_id']
