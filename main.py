@@ -6,8 +6,8 @@ import sys
 from discord import Intents
 from discord.ext import commands
 
-from src.cog import BirthdayCog
-from src.command_group import BirthdayCommandGroup
+from src.cog import BirthdayCog, SchedulerCog # Added SchedulerCog
+from src.command_group import BirthdayCommandGroup, ScheduleCommandGroup # Added ScheduleCommandGroup
 
 logger = logging.getLogger("discord")
 logger.setLevel(logging.DEBUG)
@@ -24,15 +24,23 @@ def run():
         command_prefix="/", case_insensitive=True, intents=intents
     )
     bot.tree.add_command(BirthdayCommandGroup("誕生日関連のコマンド"))
+    bot.tree.add_command(ScheduleCommandGroup(description="Manage scheduled messages")) # Added ScheduleCommandGroup
     bot.run(TOKEN, log_handler=None)
 
     @bot.event
-    async def on_ready(self):
+    async def on_ready(self): # Note: self here is actually the bot instance due to @bot.event decorator
         logger.info("BOT is ready")
         try:
+            # It's common to add cogs before syncing commands,
+            # as cogs can also contain commands.
+            # However, the original code added BirthdayCog after initial sync.
+            # For consistency with original structure, adding SchedulerCog here.
+            # A setup_hook in a Bot subclass would be a more modern place.
+            await self.add_cog(BirthdayCog(self)) # 'self' is bot here
+            await self.add_cog(SchedulerCog(self)) # Added SchedulerCog, 'self' is bot here
+
             synced = await self.tree.sync()
             logger.info(f"Synced {len(synced)} commands")
-            await bot.add_cog(BirthdayCog(bot))
         except Exception as e:
             logger.error(e)
 
